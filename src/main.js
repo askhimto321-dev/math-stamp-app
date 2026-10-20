@@ -15,6 +15,7 @@ function wd(date) { if (!date) return ''; const [y, m, d] = String(date).split('
 function pg(p) { p = String(p || '').trim(); return !p ? '' : (/^\d/.test(p) ? 'p.' + p : p); }
 function n1(v) { return v == null || isNaN(v) ? '-' : (Math.round(v * 10) / 10).toString(); }
 function rot(a, b) { let h = 0; for (const c of a + b) h = (h * 31 + c.charCodeAt(0)) | 0; return (Math.abs(h) % 15) - 7; }
+const LOGO = '<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="lgBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1C1C20"/><stop offset="1" stop-color="#0A0A0C"/></linearGradient><radialGradient id="lgGlow"><stop offset=".55" stop-color="#FF6E1E" stop-opacity=".55"/><stop offset="1" stop-color="#FF6E1E" stop-opacity="0"/></radialGradient><linearGradient id="lgDisc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF9634"/><stop offset="1" stop-color="#F05214"/></linearGradient></defs><rect width="100" height="100" rx="22.5" fill="url(#lgBg)"/><circle cx="50" cy="50" r="44" fill="url(#lgGlow)"/><circle cx="50" cy="50" r="30" fill="url(#lgDisc)"/><polyline points="35.7,52 41.2,49.5 47.5,62.5 56.3,39.9 66,39.9" fill="none" stroke="#101012" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ROLE = { owner: '만든 사람', editor: '담당 교사', stamper: '협력 교사' };
 
 /* ───────── 화면용 데이터 ───────── */
@@ -110,7 +111,7 @@ function shell() {
   app.innerHTML = `
   <header class="top">
     <div class="top-in">
-      <div class="brand"><span class="mark">印</span><b>수학 도장노트</b></div>
+      <div class="brand"><span class="mark">${LOGO}</span><b>수학 도장노트</b></div>
       <button class="class-btn" data-act="pickClass" id="classBtn" type="button"><span>반 선택</span></button>
       <div class="save" id="saveState"><i></i><span></span></div>
     </div>
@@ -164,7 +165,7 @@ function renderNotice() {
 
 /* ───────── 설정 안 됨 / 로그인 ───────── */
 function viewSetup() {
-  return `<div class="setup stack"><div class="brand"><span class="mark">印</span><b>수학 도장노트</b></div>
+  return `<div class="setup stack"><div class="brand"><span class="mark">${LOGO}</span><b>수학 도장노트</b></div>
   <div class="panel stack"><h2 style="margin:0">서버 연결이 아직 설정되지 않았습니다</h2>
   <p class="hint">저장소의 <code>public/config.js</code> 파일에 Supabase 주소와 공개 키(anon key)를 넣어 주세요. 자세한 순서는 저장소의 README에 있습니다.</p></div></div>`;
 }
@@ -172,7 +173,7 @@ const G_ICON = '<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23 12.3c0-.8-.
 const K_ICON = '<svg viewBox="0 0 24 24"><path fill="#191919" d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.7 6.6l-1 3.6c-.1.3.3.6.6.4l4.3-2.8c.5.1.9.1 1.4.1 5.5 0 10-3.5 10-7.9S17.5 3 12 3z"/></svg>';
 function viewLogin() {
   return `<div class="login"><div class="login-card">
-    <span class="mark">印</span>
+    <span class="mark">${LOGO}</span>
     <h1>수학 도장노트</h1>
     <p>수업 도장 · 결석 · 포트폴리오 점수 · 최성보를<br>동료 선생님과 함께 기록합니다.</p>
     <div class="oauth">

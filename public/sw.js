@@ -1,5 +1,5 @@
 // 오프라인에서도 앱 화면이 열리도록 파일을 저장해 둡니다. (데이터 저장은 앱이 따로 처리)
-const CACHE = 'dojang-v1';
+const CACHE = 'dojang-v2';
 const CORE = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon-192.png'];
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).catch(() => {})); });
 self.addEventListener('activate', e => {
