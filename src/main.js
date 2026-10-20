@@ -114,6 +114,7 @@ function shell() {
       <div class="brand"><span class="mark">${LOGO}</span><b>수학 도장노트</b></div>
       <button class="class-btn" data-act="pickClass" id="classBtn" type="button"><span>반 선택</span></button>
       <div class="save" id="saveState"><i></i><span></span></div>
+      <button class="me-btn" id="meBtn" type="button" data-act="account" aria-label="내 계정"></button>
     </div>
     <div class="notice"><div class="notice-in"><span class="tag" id="noticeTag">공지</span><span class="txt" id="noticeTxt"></span></div></div>
   </header>
@@ -130,9 +131,12 @@ let mode = '';
 function render(force) {
   if (!st.configured) { if (mode !== 'setup') { mode = 'setup'; app.innerHTML = viewSetup(); } return; }
   if (!S.user) { if (mode !== 'login') { mode = 'login'; app.innerHTML = viewLogin(); } return; }
+  if (!S.meLoaded) { if (mode !== 'wait') { mode = 'wait'; app.innerHTML = '<div class="loading">불러오는 중…</div>'; } return; }
+  if (st.needSignup()) { if (mode !== 'signup') { mode = 'signup'; app.innerHTML = viewSignup(); } return; }
   if (mode !== 'app') { mode = 'app'; shell(); }
   if (!force && typing()) { deferred = true; return; }
   const c = cls();
+  $('#meBtn').textContent = (S.me.name || '나').trim().slice(0, 1);
   $('#classBtn').innerHTML = c ? `<span>${esc(c.name)}</span><small>${esc(SUBJECTS[c.subject]?.name || '')}</small><small>▾</small>` : '<span>반 선택</span><small>▾</small>';
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === ui.tab));
   renderStatus(); renderNotice();
@@ -180,10 +184,71 @@ function viewLogin() {
       <button class="google" type="button" data-act="login" data-v="google">${G_ICON}Google로 시작하기</button>
       <button class="kakao" type="button" data-act="login" data-v="kakao">${K_ICON}카카오로 시작하기</button>
     </div>
-    <p class="fine">로그인하면 이름과 계정 정보가 저장됩니다. 학생 정보는 참여 승인된 선생님만 볼 수 있습니다.</p>
+    <button class="link" type="button" data-act="loginOther" style="justify-self:center;font-size:13px">다른 카카오 계정으로 로그인</button>
+    <p class="fine">처음 로그인하면 약관 동의와 간단한 가입 정보 입력 화면이 나옵니다.<br>학생 정보는 참여 승인된 선생님만 볼 수 있습니다.</p>
   </div></div>`;
 }
 
+
+/* ───────── 회원가입 (소셜 로그인 후 1회) ───────── */
+const PROVIDER = { google: 'Google', kakao: '카카오' };
+const provider = () => S.user?.app_metadata?.provider || '';
+const SUBJ_CHOICES = ['공통수학1', '공통수학2', '대수', '미적분Ⅰ', '미적분Ⅱ', '확률과 통계', '기하', '기타'];
+const subjChips = (id, picked = []) => `<div class="chips" id="${id}">${SUBJ_CHOICES.map(n => `<button type="button" class="chip ${picked.includes(n) ? 'on' : ''}" data-act="subjChip" data-v="${esc(n)}" aria-pressed="${picked.includes(n)}">${esc(n)}</button>`).join('')}</div>`;
+const pickedSubjects = sel => [...document.querySelectorAll(sel + ' .chip.on')].map(b => b.dataset.v);
+function viewSignup() {
+  const meta = S.user?.user_metadata || {};
+  const name = S.me.name && S.me.name !== '선생님' ? S.me.name : (meta.full_name || meta.name || meta.nickname || '');
+  return `<div class="login"><div class="login-card signup" style="text-align:left">
+    <div class="row" style="gap:12px"><span class="mark" style="width:44px;height:44px;margin:0">${LOGO}</span>
+      <div><div class="eyebrow">STEP 2 / 2 · 회원가입</div><h1 style="font-size:22px;color:var(--ink)">가입 정보를 확인해 주세요</h1></div></div>
+    <div class="banner"><span>${esc(PROVIDER[provider()] || '소셜')} 계정 <b>${esc(S.user?.email || meta.email || '')}</b>(으)로 로그인했습니다.</span></div>
+    <label class="field"><span>이름 (다른 선생님에게 보이는 이름) <b class="hl">*</b></span><input class="inp" id="suName" maxlength="30" value="${esc(name)}" placeholder="예: 김수학" autocomplete="name"></label>
+    <label class="field"><span>학교 (선택)</span><input class="inp" id="suSchool" maxlength="60" placeholder="예: ○○고등학교" autocomplete="organization"></label>
+    <div class="field"><span>담당 과목 (선택, 여러 개 가능)</span>${subjChips('suSubj')}</div>
+    <div class="agree">
+      <label class="check all"><input type="checkbox" id="agAll" data-chg="agree"> <b>약관 전체 동의</b></label>
+      <div class="agree-row"><label class="check"><input type="checkbox" id="agTerms" data-chg="agree"> <span><b class="hl">[필수]</b> 서비스 이용약관</span></label><button class="link" type="button" data-act="terms" data-v="terms">보기</button></div>
+      <div class="agree-row"><label class="check"><input type="checkbox" id="agPrivacy" data-chg="agree"> <span><b class="hl">[필수]</b> 개인정보 수집·이용 동의</span></label><button class="link" type="button" data-act="terms" data-v="privacy">보기</button></div>
+      <div class="agree-row"><label class="check"><input type="checkbox" id="agMkt" data-chg="agree"> <span>[선택] 새 기능 소식 받기</span></label></div>
+    </div>
+    <button class="btn primary block" id="suGo" type="button" data-act="signup" disabled style="min-height:52px;font-size:16px">가입 완료하고 시작하기</button>
+    <button class="link" type="button" data-act="switchAccount" style="justify-self:center;font-size:13px">다른 계정으로 로그인</button>
+  </div></div>`;
+}
+function accountSheet() {
+  const me = S.me, p = provider();
+  openSheet('내 계정', `
+    <div class="row" style="gap:12px"><span class="me-btn big">${esc((me.name || '나').slice(0, 1))}</span>
+      <div style="min-width:0"><strong>${esc(me.name || '')} 선생님</strong><div class="hint">${esc(PROVIDER[p] || '')} · ${esc(S.user?.email || '')}</div></div></div>
+    <label class="field"><span>이름</span><input class="inp" id="pName" maxlength="30" value="${esc(me.name || '')}"></label>
+    <label class="field"><span>학교</span><input class="inp" id="pSchool" maxlength="60" value="${esc(me.school || '')}" placeholder="예: ○○고등학교"></label>
+    <div class="field"><span>담당 과목</span>${subjChips('pSubj', me.subjects || [])}</div>
+    <button class="btn primary" type="button" data-act="saveProfile">정보 저장</button>
+    <div class="grid2"><button class="btn" type="button" data-act="logout">로그아웃</button><button class="btn" type="button" data-act="switchAccount">다른 계정으로 로그인</button></div>
+    ${S.outbox.length ? `<p class="hint" style="color:var(--warn)">아직 서버에 저장되지 않은 변경 ${S.outbox.length}건이 있습니다. 로그아웃하면 이 변경은 사라집니다.</p>` : ''}
+    <div class="row between"><div class="row"><button class="link" type="button" data-act="terms" data-v="terms">이용약관</button><button class="link" type="button" data-act="terms" data-v="privacy">개인정보 처리 안내</button></div>
+      <button class="btn sm danger" type="button" data-act="deleteAccount">회원 탈퇴</button></div>
+    <p class="fine">탈퇴하면 계정 정보와 내가 만든 반(혼자 쓰는 반)이 바로 삭제됩니다. 다른 선생님과 함께 쓰는 반은 먼저 주인을 넘겨 주세요.</p>`);
+}
+const TERMS_HTML = `<div class="terms">
+<h3>제1조 (목적)</h3><p>이 약관은 ‘수학 도장노트’(이하 서비스)를 이용하는 선생님과 운영자 사이의 이용 조건을 정합니다. 서비스는 수학 수업의 도장·결석, 포트폴리오 점수, 최소 성취수준 보장지도 기록을 동료 선생님과 함께 관리하도록 돕습니다.</p>
+<h3>제2조 (가입)</h3><p>Google 또는 카카오 계정으로 로그인한 뒤 이 약관과 개인정보 수집·이용에 동의하면 가입됩니다. 서비스는 교사와 교육 관계자를 위한 것입니다.</p>
+<h3>제3조 (이용자의 의무)</h3><p>① 학생 정보는 수업과 평가 목적에 필요한 범위에서만 입력합니다.<br>② 소속 학교와 교육청의 개인정보 처리 지침을 따릅니다.<br>③ 반 코드는 함께 수업하는 선생님에게만 알려 줍니다.</p>
+<h3>제4조 (서비스 제공)</h3><p>서비스는 무료로 제공되며, 기능이 바뀌거나 중단될 때는 앱 안에서 미리 알립니다. 중요한 기록은 엑셀·CSV로 주기적으로 내려받아 보관해 주세요.</p>
+<h3>제5조 (탈퇴)</h3><p>앱의 ‘내 계정 → 회원 탈퇴’에서 언제든 탈퇴할 수 있으며, 탈퇴하면 계정 정보와 본인이 주인인 반(혼자 쓰는 반)이 바로 삭제됩니다.</p>
+<h3>제6조 (책임)</h3><p>운영자는 서비스를 안정적으로 운영하도록 노력하며, 천재지변이나 외부 서비스(Google·카카오·Supabase) 장애처럼 운영자가 통제할 수 없는 사유로 생긴 손해에는 책임을 지지 않습니다.</p>
+</div>`;
+const PRIVACY_HTML = `<div class="terms">
+<div class="tbl-wrap"><table><tbody>
+<tr><th class="l">수집 항목</th><td class="l" style="white-space:normal">이름(표시 이름), 이메일, 로그인 계정 식별값(Google·카카오)<br>선택: 학교명, 담당 과목</td></tr>
+<tr><th class="l">수집 목적</th><td class="l" style="white-space:normal">회원 확인, 반을 함께 쓰는 선생님에게 이름 표시, 수정 기록의 작성자 표시</td></tr>
+<tr><th class="l">보유 기간</th><td class="l" style="white-space:normal"><b>회원 탈퇴 시까지</b> (탈퇴하면 바로 삭제)</td></tr>
+<tr><th class="l">보관 위치</th><td class="l" style="white-space:normal">Supabase 서버 (대한민국 서울 리전)</td></tr>
+</tbody></table></div>
+<p>동의를 거부할 수 있으나, 거부하면 서비스를 이용할 수 없습니다.</p>
+<h3>학생 정보 안내</h3><p>선생님이 입력하는 학생 번호·이름·출결·점수·지도 기록은 그 반에 승인된 선생님만 볼 수 있습니다. 입력과 이용은 소속 학교의 개인정보 처리 지침에 따라 주세요.</p>
+</div>`;
 /* ───────── 빈 화면 / 대기 ───────── */
 function viewEmpty() {
   return `<div class="stack"><div class="empty">
@@ -488,7 +553,7 @@ function viewClasses() {
       <div>${members.map(m => `<div class="mem-row"><div><strong>${esc(st.nameOf(m.user_id))}</strong> <span class="role">${m.status === 'pending' ? '승인 대기' : ROLE[m.role]}</span></div>
         <div class="row">${owner && m.role !== 'owner' ? (m.status === 'pending'
           ? `<button class="btn sm primary" type="button" data-act="approve" data-u="${m.user_id}">승인</button><button class="btn sm danger" type="button" data-act="kick" data-u="${m.user_id}">거절</button>`
-          : `<select id="role-${m.user_id}" data-chg="role" data-u="${m.user_id}"><option value="editor" ${m.role === 'editor' ? 'selected' : ''}>담당 교사</option><option value="stamper" ${m.role === 'stamper' ? 'selected' : ''}>협력 교사</option></select><button class="btn sm danger" type="button" data-act="kick" data-u="${m.user_id}">내보내기</button>`) : ''}</div></div>`).join('')}</div>
+          : `<select id="role-${m.user_id}" data-chg="role" data-u="${m.user_id}"><option value="editor" ${m.role === 'editor' ? 'selected' : ''}>담당 교사</option><option value="stamper" ${m.role === 'stamper' ? 'selected' : ''}>협력 교사</option></select><button class="btn sm" type="button" data-act="transfer" data-u="${m.user_id}">주인 넘기기</button><button class="btn sm danger" type="button" data-act="kick" data-u="${m.user_id}">내보내기</button>`) : ''}</div></div>`).join('')}</div>
       <p class="hint">담당 교사는 모든 기록을 고칠 수 있고, 협력 교사는 수업 추가와 도장·결석만 기록합니다.</p>
       <div class="row"><button class="btn sm" type="button" data-act="copyCode">초대 문구 복사</button><button class="btn sm" type="button" data-act="audit">수정 기록 보기</button></div>
     </div>
@@ -504,10 +569,8 @@ function viewClasses() {
     <div class="panel"><h2>${esc(SUBJECTS[c.subject].name)} 단원 (2022 개정)</h2>
       <div class="unit-tree">${SUBJECTS[c.subject].units.map(u => `<div><h3>${esc(u[0])}</h3><ol>${u[1].map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>`).join('')}</div></div>
     <div class="row">${owner ? `<button class="btn sm danger" type="button" data-act="delClass">반 삭제 (모든 선생님)</button>` : `<button class="btn sm danger" type="button" data-act="leave">이 반에서 나가기</button>`}</div>` : ''}
-    <div class="panel stack"><h2 style="margin:0">내 계정</h2>
-      <div class="row"><input class="inp" id="myName" value="${esc(S.me.name || '')}" style="flex:1;min-width:0" placeholder="표시할 이름"><button class="btn sm" type="button" data-act="saveName">이름 저장</button></div>
-      <div class="row"><span class="hint">${esc(S.user?.email || '')}</span><button class="btn sm" type="button" data-act="logout">로그아웃</button></div>
-    </div>
+    <div class="panel"><div class="row between"><div><h2 style="margin:0">내 계정</h2><p class="hint">${esc(S.me.name || '')} · ${esc(PROVIDER[provider()] || '')} 로그인</p></div>
+      <button class="btn sm" type="button" data-act="account">계정 · 로그아웃</button></div></div>
   </div>`;
 }
 
@@ -588,8 +651,30 @@ const curSession = () => cd().sessions.find(x => x.id === ui.session);
 function setTab(t) { ui.tab = t; ui.session = null; ui.student = null; try { localStorage.setItem('ms:tab', t); } catch (e) {} st.setPresence({ tab: t, session: null }); }
 const ACT = {
   login(el) { st.signIn(el.dataset.v).then(r => { if (r?.error) toast('로그인을 시작하지 못했습니다: ' + r.error.message); }); },
-  logout(el) { if (!armed(el)) return; if (S.outbox.length) { toast(`아직 저장 안 된 변경 ${S.outbox.length}건이 있습니다. 인터넷 연결 후 다시 시도하세요.`); return; } st.signOut(); },
-  saveName() { const n = val('myName').trim(); if (!n) return; guard(async () => { await st.renameMe(n); toast('이름을 저장했습니다.'); }); },
+  loginOther() { st.signIn('kakao', { otherAccount: true }).then(r => { if (r?.error) toast('로그인을 시작하지 못했습니다: ' + r.error.message); }); },
+  account() { accountSheet(); },
+  logout() { closeSheet(); mode = ''; st.signOut().then(() => toast('로그아웃했습니다.')); },
+  switchAccount() { closeSheet(); mode = ''; st.signOut(); },
+  saveProfile(el) {
+    const name = val('pName').trim(); if (!name) { toast('이름을 입력하세요.'); return; }
+    el.disabled = true;
+    guard(async () => { await st.updateProfile({ name, school: val('pSchool').trim(), subjects: pickedSubjects('#pSubj') }); toast('저장했습니다.'); closeSheet(); }).finally(() => { el.disabled = false; });
+  },
+  deleteAccount(el) {
+    if (!armed(el)) return;
+    guard(async () => { await st.deleteAccount(); mode = ''; toast('탈퇴했습니다. 그동안 이용해 주셔서 감사합니다.'); closeSheet(); });
+  },
+  terms(el) { openSheet(el.dataset.v === 'privacy' ? '개인정보 수집·이용 동의' : '서비스 이용약관', el.dataset.v === 'privacy' ? PRIVACY_HTML : TERMS_HTML); },
+  subjChip(el) { el.classList.toggle('on'); el.setAttribute('aria-pressed', el.classList.contains('on')); },
+  signup(el) {
+    const f = { name: val('suName').trim(), school: val('suSchool').trim(), subjects: pickedSubjects('#suSubj'),
+      terms: $('#agTerms').checked, privacy: $('#agPrivacy').checked, marketing: $('#agMkt').checked };
+    if (!f.name) { toast('이름을 입력하세요.'); $('#suName').focus(); return; }
+    if (!f.terms || !f.privacy) { toast('필수 약관에 동의해 주세요.'); return; }
+    el.disabled = true;
+    guard(async () => { await st.completeSignup(f); mode = ''; render(true); toast(`${f.name} 선생님, 가입을 환영합니다!`); }).finally(() => { if (el.isConnected) el.disabled = false; });
+  },
+  transfer(el) { if (!armed(el)) return; guard(async () => { await st.transferOwner(el.dataset.u); toast('반 주인을 넘겼습니다. 이제 담당 교사로 참여합니다.'); }); },
   tab(el) { setTab(el.dataset.v); render(true); scrollTo(0, 0); },
   closeSheet,
   refresh() { guard(st.refreshClasses).then(() => st.openClass(S.cur)); },
@@ -791,6 +876,12 @@ const CHG = {
   itType(el) { ['check', 'level', 'number'].forEach(t => { $('#ty' + t[0].toUpperCase() + t.slice(1)).hidden = el.value !== t; }); },
   csbHours(el) { st.updateClass({ hours: Math.max(1, Math.min(400, Number(el.value) || 64)) }); },
   csbTh(el) { st.updateClass({ threshold: Math.max(0, Math.min(100, Number(el.value) || 40)) }); },
+  agree(el) {
+    const all = $('#agAll'), items = ['agTerms', 'agPrivacy', 'agMkt'].map(id => $('#' + id));
+    if (el.id === 'agAll') items.forEach(i => { i.checked = el.checked; });
+    else all.checked = items.every(i => i.checked);
+    $('#suGo').disabled = !($('#agTerms').checked && $('#agPrivacy').checked);
+  },
   role(el) { guard(async () => { await st.setMember(el.dataset.u, { role: el.value }); toast('권한을 바꿨습니다.'); }); }
 };
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el || el.disabled) return; const f = ACT[el.dataset.act]; if (f) { e.preventDefault(); f(el, e); } });

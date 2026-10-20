@@ -15,7 +15,8 @@ const LS = {
 
 export const S = {
   user: null,            // 로그인한 사람
-  me: { name: '' },      // 내 프로필
+  me: LS.get('me', { name: '' }),  // 내 프로필
+  meLoaded: !!LS.get('me', null),
   classes: LS.get('classes', []),   // 내가 속한 반 목록 (my_classes)
   cur: LS.get('cur', null),         // 지금 보고 있는 반 코드
   d: null,               // 지금 반의 데이터
@@ -59,25 +60,59 @@ export async function initAuth() {
   if (S.user) await afterLogin();
 }
 async function afterLogin() {
-  loadProfile();
+  await loadProfile().catch(() => {});
   await refreshClasses();
   if (S.cur) openClass(S.cur); else if (S.classes.find(c => c.status === 'active')) openClass(S.classes.find(c => c.status === 'active' && !c.archived)?.id || S.classes[0].id);
   flush();
 }
-export function signIn(provider) {
-  return sb.auth.signInWithOAuth({ provider, options: { redirectTo: location.origin + location.pathname } });
+// 구글은 매번 계정 선택 창을 띄우고, 카카오는 '다른 계정' 요청 때만 다시 로그인하게 함
+export function signIn(provider, { otherAccount = false } = {}) {
+  const queryParams = provider === 'google' ? { prompt: 'select_account' } : (otherAccount ? { prompt: 'login' } : undefined);
+  return sb.auth.signInWithOAuth({ provider, options: { redirectTo: location.origin + location.pathname, queryParams } });
 }
+// 로그아웃: 서버 응답이 실패해도 이 기기의 로그인 정보는 반드시 지움
 export async function signOut() {
   teardown();
-  ['classes', 'cur', 'outbox', 'names'].forEach(k => LS.del(k));
-  Object.keys(localStorage).filter(k => k.startsWith('ms:class:')).forEach(k => localStorage.removeItem(k));
+  try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* 네트워크 오류여도 계속 */ }
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith('ms:') && k !== 'ms:tab' && k !== 'ms:hideInstall').forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => /^sb-.*-auth-token/.test(k)).forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+  S.user = null; S.me = { name: '' }; S.meLoaded = false;
   S.classes = []; S.cur = null; S.d = null; S.outbox = [];
-  await sb.auth.signOut();
   emit();
 }
-async function loadProfile() {
-  const { data } = await sb.from('profiles').select('id,name').eq('id', S.user.id).maybeSingle();
-  if (data) { S.me = data; S.names[data.id] = data.name; emit(); }
+export async function loadProfile() {
+  const { data, error } = await sb.from('profiles').select('*').eq('id', S.user.id).maybeSingle();
+  if (data) { S.me = data; S.meLoaded = true; S.names[data.id] = data.name; LS.set('me', data); emit(); }
+  else if (!error) { S.me = { id: S.user.id, name: '', signup_completed_at: null }; S.meLoaded = true; emit(); }
+  else if (!S.meLoaded) { S.meLoaded = true; emit(); } // 연결 오류: 가입 확인은 다음 접속 때
+}
+// 가입 정보 입력이 필요한지 (002_signup.sql 을 아직 실행하지 않았으면 건너뜀)
+export const needSignup = () => S.meLoaded && ('signup_completed_at' in S.me) && !S.me.signup_completed_at;
+export async function completeSignup(f) {
+  needOnline();
+  const { error } = await sb.rpc('complete_signup', { p_name: f.name, p_school: f.school, p_subjects: f.subjects, p_terms: f.terms, p_privacy: f.privacy, p_marketing: f.marketing });
+  if (error) throw error;
+  await loadProfile();
+}
+export async function updateProfile(patch) {
+  needOnline();
+  const { error } = await sb.from('profiles').update(patch).eq('id', S.user.id);
+  if (error) throw error;
+  await loadProfile(); track();
+}
+export async function deleteAccount() {
+  needOnline();
+  const { error } = await sb.rpc('delete_my_account');
+  if (error) throw error;
+  await signOut();
+}
+export async function transferOwner(userId) {
+  needOnline();
+  const { error } = await sb.rpc('transfer_owner', { p_class: S.cur, p_user: userId });
+  if (error) throw error;
+  await refreshClasses(); await fetchClass();
 }
 export async function renameMe(name) {
   const { error } = await sb.from('profiles').update({ name }).eq('id', S.user.id);

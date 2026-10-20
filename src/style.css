@@ -291,3 +291,17 @@ html,body{min-height:100%}
 .audit time{font-family:var(--f-num);color:var(--muted);font-size:12px}
 .setup{max-width:640px;margin:0 auto;padding-block:40px}
 .setup code{font-family:var(--f-num);background:var(--sunk);padding:1px 6px;border-radius:6px}
+
+.me-btn{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent);font-weight:900;font-size:14px;display:grid;place-items:center;padding:0}
+.me-btn.big{width:48px;height:48px;font-size:20px}
+.signup{gap:16px}
+.agree{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:6px 12px}
+.agree .check{min-height:44px}
+.agree .all{border-bottom:1px solid var(--line)}
+.agree-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.agree-row .link{font-size:13px;color:var(--muted);font-weight:500;text-decoration:underline}
+.terms{display:grid;gap:8px;font-size:14px;line-height:1.7}
+.terms h3{font-size:14px;margin-top:6px}
+.terms p{margin:0;color:var(--muted)}
+.terms th{position:static;width:84px}
+@media (max-width:420px){.save span{display:none}}
