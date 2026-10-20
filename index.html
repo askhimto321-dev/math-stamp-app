@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>수학 도장노트</title>
+  <meta name="description" content="수학 선생님들이 함께 쓰는 수업 도장 · 결석 · 포트폴리오 점수 · 최소 성취수준 보장지도 기록 앱">
+  <meta name="theme-color" content="#0A0A0B" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F5F5F6" media="(prefers-color-scheme: light)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="도장노트">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Song+Myung&display=swap">
+  <script src="./config.js"></script>
+</head>
+<body>
+  <div id="app"><div class="loading">불러오는 중…</div></div>
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+      <div class="sh-head"><h2 id="shTitle"></h2><button class="x" type="button" data-act="closeSheet" aria-label="닫기">✕</button></div>
+      <div class="sh-body" id="shBody"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
