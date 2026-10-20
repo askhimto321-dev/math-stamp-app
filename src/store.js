@@ -75,7 +75,7 @@ export async function signOut() {
   teardown();
   try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* 네트워크 오류여도 계속 */ }
   try {
-    Object.keys(localStorage).filter(k => k.startsWith('ms:') && k !== 'ms:tab' && k !== 'ms:hideInstall').forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith('ms:') && !['ms:tab', 'ms:hideInstall', 'ms:theme'].includes(k)).forEach(k => localStorage.removeItem(k));
     Object.keys(localStorage).filter(k => /^sb-.*-auth-token/.test(k)).forEach(k => localStorage.removeItem(k));
   } catch (e) {}
   S.user = null; S.me = { name: '' }; S.meLoaded = false;
@@ -256,7 +256,7 @@ function applyRow(t, r) {
     case 'item_scores': (d.scores[r.item_id] ||= {})[r.student_id] = r.value == null ? null : Number(r.value); break;
     case 'csb': d.csb[r.student_id] = { rate: r.rate == null ? null : Number(r.rate), done: !!r.done, memo: r.memo || '' }; break;
     case 'class_members': { const i = d.members.findIndex(m => m.user_id === r.user_id); if (i >= 0) d.members[i] = r; else d.members.push(r); break; }
-    case 'classes': d.cls = { ...d.cls, ...r }; { const c = S.classes.find(x => x.id === r.id); if (c) Object.assign(c, { name: r.name, subject: r.subject, term: r.term, archived: r.archived }); } break;
+    case 'classes': d.cls = { ...d.cls, ...r }; { const c = S.classes.find(x => x.id === r.id); if (c) for (const k of ['name', 'subject', 'term', 'archived', 'grade', 'room']) if (k in r) c[k] = r[k]; } break;
   }
 }
 

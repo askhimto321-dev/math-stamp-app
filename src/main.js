@@ -124,7 +124,7 @@ function shell() {
     <button type="button" data-act="tab" data-v="portfolio"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>포트폴리오</button>
     <button type="button" data-act="tab" data-v="score"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>점수</button>
     <button type="button" data-act="tab" data-v="csb"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>최성보</button>
-    <button type="button" data-act="tab" data-v="classes"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14.8c1.8.8 3 2.6 3.5 5.2"/></svg>반·설정</button>
+    <button type="button" data-act="tab" data-v="classes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>설정</button>
   </div></nav>`;
 }
 let mode = '';
@@ -141,7 +141,8 @@ function render(force) {
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === ui.tab));
   renderStatus(); renderNotice();
   const v = $('#view'), wrap = v.querySelector('.tbl-wrap'), sl = wrap ? wrap.scrollLeft : 0;
-  if (ui.tab === 'classes') v.innerHTML = viewClasses();
+  if (ui.page && PAGES[ui.page.name]) v.innerHTML = PAGES[ui.page.name]();
+  else if (ui.tab === 'classes') v.innerHTML = viewSettings();
   else if (!c) v.innerHTML = viewEmpty();
   else if (c.status !== 'active') v.innerHTML = viewPending(c);
   else if (!cd().loaded) v.innerHTML = '<div class="loading">반 정보를 불러오는 중…</div>';
@@ -216,21 +217,6 @@ function viewSignup() {
     <button class="link" type="button" data-act="switchAccount" style="justify-self:center;font-size:13px">다른 계정으로 로그인</button>
   </div></div>`;
 }
-function accountSheet() {
-  const me = S.me, p = provider();
-  openSheet('내 계정', `
-    <div class="row" style="gap:12px"><span class="me-btn big">${esc((me.name || '나').slice(0, 1))}</span>
-      <div style="min-width:0"><strong>${esc(me.name || '')} 선생님</strong><div class="hint">${esc(PROVIDER[p] || '')} · ${esc(S.user?.email || '')}</div></div></div>
-    <label class="field"><span>이름</span><input class="inp" id="pName" maxlength="30" value="${esc(me.name || '')}"></label>
-    <label class="field"><span>학교</span><input class="inp" id="pSchool" maxlength="60" value="${esc(me.school || '')}" placeholder="예: ○○고등학교"></label>
-    <div class="field"><span>담당 과목</span>${subjChips('pSubj', me.subjects || [])}</div>
-    <button class="btn primary" type="button" data-act="saveProfile">정보 저장</button>
-    <div class="grid2"><button class="btn" type="button" data-act="logout">로그아웃</button><button class="btn" type="button" data-act="switchAccount">다른 계정으로 로그인</button></div>
-    ${S.outbox.length ? `<p class="hint" style="color:var(--warn)">아직 서버에 저장되지 않은 변경 ${S.outbox.length}건이 있습니다. 로그아웃하면 이 변경은 사라집니다.</p>` : ''}
-    <div class="row between"><div class="row"><button class="link" type="button" data-act="terms" data-v="terms">이용약관</button><button class="link" type="button" data-act="terms" data-v="privacy">개인정보 처리 안내</button></div>
-      <button class="btn sm danger" type="button" data-act="deleteAccount">회원 탈퇴</button></div>
-    <p class="fine">탈퇴하면 계정 정보와 내가 만든 반(혼자 쓰는 반)이 바로 삭제됩니다. 다른 선생님과 함께 쓰는 반은 먼저 주인을 넘겨 주세요.</p>`);
-}
 const TERMS_HTML = `<div class="terms">
 <h3>제1조 (목적)</h3><p>이 약관은 ‘수학 도장노트’(이하 서비스)를 이용하는 선생님과 운영자 사이의 이용 조건을 정합니다. 서비스는 수학 수업의 도장·결석, 포트폴리오 점수, 최소 성취수준 보장지도 기록을 동료 선생님과 함께 관리하도록 돕습니다.</p>
 <h3>제2조 (가입)</h3><p>Google 또는 카카오 계정으로 로그인한 뒤 이 약관과 개인정보 수집·이용에 동의하면 가입됩니다. 서비스는 교사와 교육 관계자를 위한 것입니다.</p>
@@ -285,7 +271,7 @@ function viewLesson() {
       <div class="kpis"><span>학생<b>${n}</b>명</span><span>수업<b>${asc.length}</b>회</span><span>평균 도장률<b>${Math.round(avg)}</b>%</span></div>
     </section>
     ${!n ? `<div class="panel"><p class="hint">학생 명단이 비어 있습니다. ${st.canEdit() ? `<button class="link" data-act="tab" data-v="classes" type="button">반·설정 탭에서 학생 추가</button>` : '담당 선생님이 명단을 넣으면 보입니다.'}</p></div>` : ''}
-    ${ss.length ? `<div class="row between"><h2 style="font-size:16px">수업 기록</h2><span class="hint">최근 순</span></div><ul class="list">${ss.map(s => `<li><button class="s-card" data-act="openSession" data-id="${s.id}" type="button">
+    ${ss.length ? `<div class="sec-h"><span class="no">§ 01</span><h2>수업 기록</h2><span class="aside">${asc.length}회 · 최근 순</span></div><ul class="list">${ss.map(s => `<li><button class="s-card" data-act="openSession" data-id="${s.id}" type="button">
         <span class="s-ord">${String(ord.get(s.id)).padStart(2, '0')}</span>
         <div class="s-date"><b>${md(s.date)}</b><span>${wd(s.date)}${s.period ? ` · ${s.period}교시` : ''}</span></div>
         <div class="s-info"><strong>${esc(s.topic || subUnit(c.subject, s.unit) || '수업')}</strong>
@@ -474,19 +460,20 @@ function viewCsb() {
   const rows = list.map(x => ({ x, s: csbStatus(x.id) }));
   const n = { bad: 0, warn: 0, ok: 0 }; rows.forEach(r => n[r.s.level]++);
   const shown = ui.csbFilter === 'target' ? rows.filter(r => r.s.level !== 'ok') : rows;
-  return `<div class="stack">
-    <div class="head"><div><h1>최소 성취수준 보장지도</h1><p>출석률 2/3 이상 · 학업성취율 ${d.csb.threshold}% 이상이면 이수</p></div>
-      <div class="row"><button class="btn sm" data-act="copyCsb" type="button">엑셀용 복사</button><button class="btn sm" data-act="csvCsb" type="button">CSV 저장</button></div></div>
-    <div class="sum-chips">
+  return `<div class="page">
+    <div class="head"><div><h1>최성보</h1><p>최소 성취수준 보장지도 · 출석률 2/3 이상, 학업성취율 ${d.csb.threshold}% 이상이면 이수</p></div></div>
+    ${sec('01', '현황', `<div class="sum-chips">
       <div class="sum bad"><b>${n.bad}</b><span>보충지도 대상</span></div>
       <div class="sum warn"><b>${n.warn}</b><span>예방지도 권장</span></div>
-      <div class="sum ok"><b>${n.ok}</b><span>도달·이수</span></div>
-    </div>
-    ${edit ? `<div class="panel grid2">
-      <label class="field"><span>과목 총 수업 시수</span><input class="inp num" type="number" inputmode="numeric" id="csbHours" data-chg="csbHours" value="${c.hours}"></label>
-      <label class="field"><span>기준 학업성취율 (%)</span><input class="inp num" type="number" inputmode="numeric" id="csbTh" data-chg="csbTh" value="${d.csb.threshold}"></label>
-      <p class="hint" style="grid-column:1/-1">결석 허용 ${Math.floor(c.hours / 3)}시간 (총 시수의 1/3). 결석은 수업 화면의 결석 체크에서 자동으로 셉니다. 학업성취율은 학생을 눌러 입력하세요.</p>
-    </div>` : `<p class="hint">총 ${c.hours}시간 · 결석 허용 ${Math.floor(c.hours / 3)}시간</p>`}
+      <div class="sum ok"><b>${n.ok}</b><span>도달·이수</span></div></div>`)}
+    <details class="fold"><summary><span class="no">§ 02</span><span class="t">기준 · 내보내기</span><small>${c.hours}시간 · 결석 허용 ${Math.floor(c.hours / 3)}시간 · 기준 ${d.csb.threshold}%</small></summary><div class="body">
+      ${edit ? `<div class="grid2">
+        <label class="field"><span>과목 총 수업 시수</span><input class="inp num" type="number" inputmode="numeric" id="csbHours" data-chg="csbHours" value="${c.hours}"></label>
+        <label class="field"><span>기준 학업성취율 (%)</span><input class="inp num" type="number" inputmode="numeric" id="csbTh" data-chg="csbTh" value="${d.csb.threshold}"></label></div>` : ''}
+      <p class="hint">결석 허용은 총 시수의 1/3입니다. 결석은 수업 화면의 결석 체크에서 자동으로 셉니다. 학업성취율은 학생을 눌러 입력하세요.</p>
+      <div class="row"><button class="btn sm" data-act="copyCsb" type="button">엑셀용 복사</button><button class="btn sm" data-act="csvCsb" type="button">CSV 저장</button></div>
+    </div></details>
+    <section class="sec"><div class="sec-h"><span class="no">§ 03</span><h2>학생별</h2></div>
     <div class="seg"><button type="button" data-act="csbFilter" data-v="all" class="${ui.csbFilter === 'all' ? 'on' : ''}">전체 ${rows.length}명</button><button type="button" data-act="csbFilter" data-v="target" class="${ui.csbFilter === 'target' ? 'on' : ''}">지도 필요 ${n.bad + n.warn}명</button></div>
     ${shown.length ? `<ul class="list">${shown.map(({ x, s }) => `<li><button class="csb-row" type="button" data-act="openCsb" data-sid="${x.id}">
       <span class="no">${x.no ?? ''}</span>
@@ -495,6 +482,7 @@ function viewCsb() {
         ${s.reasons.length && !s.info.done ? `<span class="facts">${esc(s.reasons.join(' · '))}</span>` : ''}</span>
       <span class="pill ${s.level}">${s.label}</span></button></li>`).join('')}</ul>`
       : `<div class="empty"><p class="hint">${list.length ? '지도가 필요한 학생이 없습니다.' : '학생이 없습니다.'}</p></div>`}
+    </section>
   </div>`;
 }
 function csbSheet(sid) {
@@ -531,47 +519,266 @@ function csbSheet(sid) {
     </div>` : ''}`);
 }
 
-/* ───────── 반·설정 ───────── */
-function viewClasses() {
-  const c = cls(), active = c && c.status === 'active', edit = active && st.canEdit(), owner = active && st.isOwner();
-  const list = active && cd().loaded ? students() : [];
-  const groups = [['참여 중', S.classes.filter(k => k.status === 'active' && !k.archived)], ['승인 대기', S.classes.filter(k => k.status === 'pending')], ['보관한 반', S.classes.filter(k => k.status === 'active' && k.archived)]];
-  const members = active ? [...cd().members].sort((a, b) => (a.status === 'pending' ? -1 : 0) - (b.status === 'pending' ? -1 : 0)) : [];
-  const pend = members.filter(m => m.status === 'pending');
-  return `<div class="stack">
-    ${installBanner()}
-    <div class="head"><div><h1>반 · 설정</h1><p>${esc(S.me.name || '')} 선생님</p></div>
-      <div class="row"><button class="btn outline" type="button" data-act="joinSheet">코드로 참여</button><button class="btn primary" type="button" data-act="newClass">+ 새 반</button></div></div>
-    ${S.classes.length ? groups.filter(g => g[1].length).map(([title, arr]) => `<div class="eyebrow">${title}</div><ul class="list">${arr.map(k => `<li><div class="s-card" style="grid-template-columns:minmax(0,1fr) auto">
-      <div class="s-info"><strong>${esc(k.name)} ${k.id === S.cur ? '<span class="pill red">사용 중</span>' : ''}</strong>
-      <span class="wrap">${esc(SUBJECTS[k.subject]?.name || '')} · ${esc(k.term || '')} · ${esc(ROLE[k.role] || '')} · 코드 <b class="num" style="color:var(--accent)">${esc(k.id)}</b></span></div>
-      <div class="row">${k.id !== S.cur ? `<button class="btn sm" type="button" data-act="useClass" data-id="${k.id}">선택</button>` : ''}</div></div></li>`).join('')}</ul>`).join('') : viewEmpty()}
-    ${active ? `
-    <div class="panel stack">
-      <div class="row between"><h2 style="margin:0">${esc(c.name)} 함께 쓰는 선생님</h2><span class="code">${esc(c.id)}</span></div>
-      ${pend.length && owner ? `<div class="banner"><span>참여 요청 ${pend.length}건이 있습니다. 승인해야 기록을 볼 수 있습니다.</span></div>` : ''}
-      <div>${members.map(m => `<div class="mem-row"><div><strong>${esc(st.nameOf(m.user_id))}</strong> <span class="role">${m.status === 'pending' ? '승인 대기' : ROLE[m.role]}</span></div>
-        <div class="row">${owner && m.role !== 'owner' ? (m.status === 'pending'
-          ? `<button class="btn sm primary" type="button" data-act="approve" data-u="${m.user_id}">승인</button><button class="btn sm danger" type="button" data-act="kick" data-u="${m.user_id}">거절</button>`
-          : `<select id="role-${m.user_id}" data-chg="role" data-u="${m.user_id}"><option value="editor" ${m.role === 'editor' ? 'selected' : ''}>담당 교사</option><option value="stamper" ${m.role === 'stamper' ? 'selected' : ''}>협력 교사</option></select><button class="btn sm" type="button" data-act="transfer" data-u="${m.user_id}">주인 넘기기</button><button class="btn sm danger" type="button" data-act="kick" data-u="${m.user_id}">내보내기</button>`) : ''}</div></div>`).join('')}</div>
-      <p class="hint">담당 교사는 모든 기록을 고칠 수 있고, 협력 교사는 수업 추가와 도장·결석만 기록합니다.</p>
-      <div class="row"><button class="btn sm" type="button" data-act="copyCode">초대 문구 복사</button><button class="btn sm" type="button" data-act="audit">수정 기록 보기</button></div>
+/* ───────── 설정 (메뉴 → 하위 화면) ───────── */
+const ICON = {
+  info: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+  students: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-3.6 3.8-5.5 7-5.5s6 1.9 7 5.5"/>',
+  team: '<circle cx="9" cy="8" r="3.2"/><path d="M3 19c.8-3.2 3.2-5 6-5s5.2 1.8 6 5"/><path d="M16 5a3 3 0 010 6M18 14.5c1.6.7 2.6 2.3 3 4.5"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  archive: '<rect x="3.5" y="4" width="17" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 006.5 20h11a1.5 1.5 0 001.5-1.5V9M10 13h4"/>',
+  book: '<path d="M4 5.5A1.5 1.5 0 015.5 4H11v16H5.5A1.5 1.5 0 014 18.5zM20 5.5A1.5 1.5 0 0018.5 4H13v16h5.5a1.5 1.5 0 001.5-1.5z"/>',
+  list: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  plus: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2M14 9l2 2"/>',
+  moon: '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>',
+  phone: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',
+  doc: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+  out: '<path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 16l-4-4 4-4M6 12h10"/>'
+};
+const THEME_NAME = { dark: '다크 (기본)', light: '라이트', system: '휴대폰 설정 따르기' };
+function getTheme() { try { return localStorage.getItem('ms:theme') || 'dark'; } catch (e) { return 'dark'; } }
+function setTheme(t) { try { localStorage.setItem('ms:theme', t); } catch (e) {} document.documentElement.dataset.theme = t; }
+const menuRow = (v, icon, title, sub = '', extra = '', act = 'go', cls = '') =>
+  `<button class="menu-row ${cls}" type="button" data-act="${act}" data-v="${v}"><svg viewBox="0 0 24 24">${ICON[icon]}</svg><span style="min-width:0"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</span>${extra || '<span></span>'}<span class="chev">›</span></button>`;
+const sec = (no, title, body, aside = '') => `<section class="sec"><div class="sec-h"><span class="no">§ ${no}</span><h2>${title}</h2>${aside ? `<span class="aside">${aside}</span>` : ''}</div>${body}</section>`;
+const subhead = (back = '설정') => `<div class="subhead"><button class="back" type="button" data-act="back2">${esc(back)}</button></div>`;
+const chip = (on, act, k, v, label, cls = '') => `<button type="button" class="chip ${on ? 'on' : ''} ${cls}" data-act="${act}" data-k="${k}" data-v="${esc(v)}" aria-pressed="${on}">${label}</button>`;
+
+function viewSettings() {
+  const c = cls(), active = c && c.status === 'active', owner = active && st.isOwner(), edit = active && st.canEdit();
+  const loaded = active && cd().loaded, mem = loaded ? cd().members : [];
+  const pend = mem.filter(m => m.status === 'pending').length, act = mem.filter(m => m.status === 'active').length;
+  return `<div class="page">
+    <h1 class="page-title">설정</h1>
+    <button class="profile-card" type="button" data-act="go" data-v="account"><span class="me-btn big">${esc((S.me.name || '나').slice(0, 1))}</span>
+      <span style="min-width:0;flex:1"><strong>${esc(S.me.name || '')} 선생님</strong><small>${esc(S.me.school || '학교 미입력')} · ${esc(PROVIDER[provider()] || '')} 로그인</small></span><span class="chev" style="color:var(--muted);font-size:20px">›</span></button>
+    ${active ? `<div class="menu-label">${esc(c.name)} · ${esc(SUBJECTS[c.subject]?.name || '')}</div><div class="menu">
+      ${menuRow('clsInfo', 'info', '반 정보', '학년·반 · 과목 · 학기 · 수업 시수')}
+      ${menuRow('students', 'students', '학생 명단', loaded ? `${cd().students.length}명` : '')}
+      ${menuRow('members', 'team', '함께 쓰는 선생님', `${act || 1}명 · 반 코드 ${esc(c.id)}`, pend && owner ? `<span class="badge">${pend}</span>` : '')}
+      ${menuRow('audit', 'clock', '수정 기록', '누가 언제 무엇을 바꿨는지')}
+      ${edit ? menuRow('semester', 'archive', '학기 넘기기', '보관 · 같은 명단으로 새 반') : ''}
+      ${menuRow('units', 'book', '단원 보기', '2022 개정 교육과정')}
+    </div>` : ''}
+    <div class="menu-label">반</div><div class="menu">
+      ${menuRow('classList', 'list', '반 목록 · 바꾸기', `${S.classes.length}개`)}
+      ${menuRow('newClass', 'plus', '새 반 만들기', '과목 · 학년 · 반 선택')}
+      ${menuRow('join', 'key', '반 코드로 참여', '동료 선생님의 반에 참여 요청')}
     </div>
-    <div class="panel">
-      <div class="row between"><h2 style="margin:0">학생 명단 ${list.length}명</h2>${edit ? `<button class="btn sm" type="button" data-act="bulkStudents">+ 명단 붙여넣기</button>` : ''}</div>
-      ${list.length ? `<div style="margin-top:8px">${list.map(x => `<div class="item-row"><div><strong><span class="num" style="color:var(--muted)">${x.no ?? ''}</span> ${esc(x.name)}</strong></div>${edit ? `<button class="btn sm" type="button" data-act="editStudent" data-sid="${x.id}">수정</button>` : ''}</div>`).join('')}</div>`
-        : `<p class="hint" style="margin-top:8px">${edit ? '엑셀이나 나이스에서 번호와 이름을 복사해 붙여 넣으면 한 번에 추가됩니다.' : '아직 학생이 없습니다.'}</p>`}
+    <div class="menu-label">앱</div><div class="menu">
+      ${menuRow('theme', 'moon', '화면 모드', THEME_NAME[getTheme()])}
+      ${menuRow('install', 'phone', '휴대폰에 설치', '홈 화면에 앱처럼 두기')}
+      ${menuRow('terms', 'doc', '약관 · 개인정보 안내')}
+      ${menuRow('', 'out', '로그아웃', '', '', 'logout', 'danger')}
     </div>
-    ${edit ? `<div class="panel stack"><h2 style="margin:0">반 정보 · 학기 넘기기</h2>
-      <p class="hint">학기가 끝나면 반을 보관하고, 같은 명단으로 새 학기 반을 만들 수 있습니다.</p>
-      <div class="row"><button class="btn sm" type="button" data-act="editClass">반 정보 수정</button><button class="btn sm" type="button" data-act="copyClass">명단 복사해서 새 반</button>
-      <button class="btn sm" type="button" data-act="archive">${c.archived ? '보관 해제' : '이 반 보관'}</button></div></div>` : ''}
-    <div class="panel"><h2>${esc(SUBJECTS[c.subject].name)} 단원 (2022 개정)</h2>
-      <div class="unit-tree">${SUBJECTS[c.subject].units.map(u => `<div><h3>${esc(u[0])}</h3><ol>${u[1].map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>`).join('')}</div></div>
-    <div class="row">${owner ? `<button class="btn sm danger" type="button" data-act="delClass">반 삭제 (모든 선생님)</button>` : `<button class="btn sm danger" type="button" data-act="leave">이 반에서 나가기</button>`}</div>` : ''}
-    <div class="panel"><div class="row between"><div><h2 style="margin:0">내 계정</h2><p class="hint">${esc(S.me.name || '')} · ${esc(PROVIDER[provider()] || '')} 로그인</p></div>
-      <button class="btn sm" type="button" data-act="account">계정 · 로그아웃</button></div></div>
   </div>`;
+}
+
+/* 반 만들기 · 반 정보 (같은 양식) */
+function termChoices() { const d = new Date(), y = d.getFullYear(); return [`${y}학년도 1학기`, `${y}학년도 2학기`, `${y + 1}학년도 1학기`]; }
+function defaultTerm() { const d = new Date(); return `${d.getFullYear()}학년도 ${d.getMonth() + 1 >= 8 ? 2 : 1}학기`; }
+function formFromClass(c) {
+  let grade = c.grade ?? null, room = c.room ?? '', roomText = '';
+  if (!grade) { const m = String(c.name || '').match(/^\s*(\d)\s*학년\s*(.*)$/); if (m) { grade = Number(m[1]); room = m[2].replace(/반$/, '').trim(); } }
+  if (room && !/^\d{1,2}$/.test(String(room))) { roomText = String(room); room = 'custom'; }
+  return { subject: c.subject, grade, room: room ? String(room) : null, roomText, term: c.term || defaultTerm(), hours: c.hours || 64, hoursText: '' };
+}
+function formName(f) {
+  if (!f.grade || !f.room) return '';
+  if (f.room === 'custom') return f.roomText.trim() ? (/학년/.test(f.roomText) ? f.roomText.trim() : `${f.grade}학년 ${f.roomText.trim()}`) : '';
+  return `${f.grade}학년 ${f.room}반`;
+}
+function viewClassForm() {
+  const pg_ = ui.page, f = ui.form, edit = pg_.name === 'clsInfo', c = cls();
+  if (edit && !st.canEdit()) {
+    return `<div class="page">${subhead()}<h1 class="page-title">반 정보</h1>
+      <div class="summary"><span class="k">이 반</span><span class="v">${esc(c.name)}</span><span class="m">${esc(SUBJECTS[c.subject]?.name)} · ${esc(c.term || '')} · ${c.hours}시간</span></div>
+      <p class="hint">반 정보는 담당 교사가 바꿀 수 있습니다.</p></div>`;
+  }
+  const name = formName(f), terms = [...new Set([...termChoices(), f.term].filter(Boolean))];
+  const ready = !!(f.subject && name && f.term && f.hours);
+  return `<div class="page">${subhead()}
+    <h1 class="page-title">${edit ? '반 정보' : pg_.copy ? '같은 명단으로 새 반' : '새 반 만들기'}</h1>
+    ${sec('01', '과목', `<div class="opts">${Object.entries(SUBJECTS).map(([id, s]) => `<button type="button" class="opt ${f.subject === id ? 'on' : ''}" data-act="fset" data-k="subject" data-v="${id}" aria-pressed="${f.subject === id}"><b>${s.name}</b><span class="kind">${s.kind}</span><small>${s.units.map(u => u[0]).join('  ')}</small></button>`).join('')}</div>`)}
+    ${sec('02', '학년 · 반', `<div class="chips grid4" style="grid-template-columns:repeat(3,1fr)">${[1, 2, 3].map(g => chip(f.grade === g, 'fset', 'grade', g, g + '학년')).join('')}</div>
+      <div class="chips grid5">${Array.from({ length: 15 }, (_, i) => String(i + 1)).map(r => chip(f.room === r, 'fset', 'room', r, r + '반')).join('')}</div>
+      ${chip(f.room === 'custom', 'fset', 'room', 'custom', '직접 입력 (예: 미적분 A반, 심화반)')}
+      ${f.room === 'custom' ? `<input class="inp" id="fRoomText" data-inp="roomText" maxlength="30" value="${esc(f.roomText)}" placeholder="예: 미적분 A반">` : ''}`)}
+    ${sec('03', '학기 · 수업 시수', `<div class="chips">${terms.map(t => chip(f.term === t, 'fset', 'term', t, t)).join('')}</div>
+      <div class="chips grid4">${[32, 48, 64, 80].map(h => chip(Number(f.hours) === h, 'fset', 'hours', h, h + '시간')).join('')}</div>
+      <p class="hint">4학점 과목은 <b class="hl">64시간</b>(학점당 16회)이 기본입니다. 최성보의 결석 허용 시간(1/3)을 계산할 때 씁니다.</p>`)}
+    <div class="summary"><span class="k">${edit ? '저장할 내용' : '새로 만들 반'}</span><span class="v" id="sumName">${esc(name || '학년·반을 골라 주세요')}</span>
+      <span class="m">${esc(SUBJECTS[f.subject]?.name || '과목 미선택')} · ${esc(f.term || '')} · ${f.hours}시간${pg_.copy ? ` · 학생 ${cd().students.length}명 복사` : ''}</span></div>
+  </div>
+  <div class="actionbar"><div class="in"><button class="btn primary lg" type="button" data-act="saveClassForm" id="fSave" ${ready ? '' : 'disabled'}>${edit ? '저장' : '반 만들기'}</button></div></div>`;
+}
+
+/* 수업 추가 · 수정 (달력 + 교시 + 단원) */
+function calendar(f) {
+  const [y, m] = f.ym, first = new Date(y, m - 1, 1).getDay(), days = new Date(y, m, 0).getDate(), t = today();
+  const has = new Set(cd().sessions.map(s => s.date));
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push('<span class="day out"></span>');
+  for (let d = 1; d <= days; d++) {
+    const ds = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    cells.push(`<button type="button" class="day ${ds === f.date ? 'on' : ''} ${ds === t ? 'today' : ''} ${has.has(ds) ? 'has' : ''}" data-act="calPick" data-v="${ds}" aria-label="${m}월 ${d}일">${d}</button>`);
+  }
+  return `<div class="cal"><div class="cal-h"><button type="button" data-act="calMove" data-v="-1" aria-label="이전 달">‹</button><b>${y}년 ${m}월</b><button type="button" data-act="calMove" data-v="1" aria-label="다음 달">›</button></div>
+    <div class="cal-g">${WD.map((w, i) => `<span class="wd ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</span>`).join('')}${cells.join('')}</div></div>`;
+}
+function viewSessionForm() {
+  const c = cls(), f = ui.sform, edit = !!f.id, units = SUBJECTS[c.subject].units;
+  const topicPh = f.unitI != null && f.unitJ != null ? units[f.unitI][1][f.unitJ] : '예: 직선의 방정식';
+  return `<div class="page">${subhead(edit ? '도장 화면' : '수업 목록')}
+    <h1 class="page-title">${edit ? '수업 정보 수정' : '수업 추가'}</h1>
+    ${sec('01', '날짜', calendar(f), `${md(f.date)} (${wd(f.date)})`)}
+    ${sec('02', '교시', `<div class="chips grid4">${[1, 2, 3, 4, 5, 6, 7, 8].map(p => chip(Number(f.period) === p, 'sset', 'period', p, p + '교시')).join('')}</div>
+      ${chip(!f.period, 'sset', 'period', '', '교시 선택 안 함')}`)}
+    ${sec('03', '단원 · ' + esc(SUBJECTS[c.subject].name), `<div class="chips">${units.map((u, i) => chip(f.unitI === i, 'sset', 'unitI', i, esc(u[0]))).join('')}</div>
+      ${f.unitI != null ? `<div class="chips">${units[f.unitI][1].map((n, j) => chip(f.unitJ === j, 'sset', 'unitJ', j, esc(n))).join('')}</div>` : '<p class="hint">대단원을 고르면 소단원이 나옵니다.</p>'}`)}
+    ${sec('04', '수업 내용', `<label class="field"><span>학습 주제</span><input class="inp" id="sTopic" data-inp="topic" value="${esc(f.topic)}" placeholder="${esc(topicPh)} (비우면 소단원 이름)"></label>
+      <label class="field"><span>교재 페이지</span><input class="inp" id="sPages" data-inp="pages" value="${esc(f.pages)}" placeholder="예: 34-41"></label>
+      <label class="field"><span>메모 (선택)</span><input class="inp" id="sMemo" data-inp="memo" value="${esc(f.memo)}" placeholder="예: 쪽지 시험, 활동지 배부"></label>
+      ${edit && st.canEdit() ? `<button class="btn danger" type="button" data-act="delSession" data-id="${f.id}">이 수업 삭제</button>` : ''}`)}
+  </div>
+  <div class="actionbar"><div class="in"><button class="btn primary lg" type="button" data-act="saveSessionForm">${edit ? '저장' : '추가하고 도장 찍기'}</button></div></div>`;
+}
+
+/* 하위 화면들 */
+function viewAccount() {
+  const me = S.me, p = provider();
+  return `<div class="page">${subhead()}<h1 class="page-title">내 계정</h1>
+    <div class="profile-card" style="cursor:default"><span class="me-btn big">${esc((me.name || '나').slice(0, 1))}</span><span style="min-width:0"><strong>${esc(me.name || '')} 선생님</strong><small>${esc(PROVIDER[p] || '')} · ${esc(S.user?.email || '')}</small></span></div>
+    ${sec('01', '내 정보', `<label class="field"><span>이름</span><input class="inp" id="pName" maxlength="30" value="${esc(me.name || '')}"></label>
+      <label class="field"><span>학교</span><input class="inp" id="pSchool" maxlength="60" value="${esc(me.school || '')}" placeholder="예: ○○고등학교"></label>
+      <div class="field"><span>담당 과목</span>${subjChips('pSubj', me.subjects || [])}</div>
+      <button class="btn primary" type="button" data-act="saveProfile">정보 저장</button>`)}
+    ${sec('02', '로그인', `<div class="grid2"><button class="btn" type="button" data-act="logout">로그아웃</button><button class="btn" type="button" data-act="switchAccount">다른 계정으로 로그인</button></div>
+      ${S.outbox.length ? `<p class="hint" style="color:var(--warn)">아직 서버에 저장되지 않은 변경 ${S.outbox.length}건이 있습니다. 로그아웃하면 이 변경은 사라집니다.</p>` : ''}`)}
+    ${sec('03', '회원 탈퇴', `<p class="hint">탈퇴하면 계정 정보와 내가 만든 반(혼자 쓰는 반)이 바로 삭제됩니다. 다른 선생님과 함께 쓰는 반은 먼저 ‘함께 쓰는 선생님’에서 주인을 넘겨 주세요.</p>
+      <div><button class="btn danger" type="button" data-act="deleteAccount">회원 탈퇴</button></div>`)}
+  </div>`;
+}
+function viewStudents() {
+  const edit = st.canEdit(), list = students();
+  return `<div class="page">${subhead()}<div class="head"><div><h1>학생 명단</h1><p>${esc(cls().name)} · ${list.length}명</p></div>${edit ? `<button class="btn primary" type="button" data-act="bulkStudents">+ 명단 붙여넣기</button>` : ''}</div>
+    ${list.length ? `<div class="panel" style="padding-block:6px">${list.map(x => `<div class="item-row"><div><strong><span class="num" style="color:var(--muted);margin-right:8px">${x.no ?? ''}</span>${esc(x.name)}</strong></div>${edit ? `<button class="btn sm" type="button" data-act="editStudent" data-sid="${x.id}">수정</button>` : ''}</div>`).join('')}</div>`
+      : `<div class="empty"><p class="hint">${edit ? '엑셀이나 나이스에서 번호와 이름을 복사해 붙여 넣으면 한 번에 추가됩니다.' : '아직 학생이 없습니다.'}</p></div>`}
+  </div>`;
+}
+function viewMembers() {
+  const c = cls(), owner = st.isOwner();
+  const members = [...cd().members].sort((a, b) => (a.status === 'pending' ? -1 : 0) - (b.status === 'pending' ? -1 : 0));
+  const pend = members.filter(m => m.status === 'pending');
+  return `<div class="page">${subhead()}<h1 class="page-title">함께 쓰는 선생님</h1>
+    <div class="summary"><span class="k">반 코드</span><span class="v num" style="letter-spacing:.12em">${esc(c.id)}</span>
+      <span class="m">이 코드를 받은 선생님이 ‘반 코드로 참여’에 입력하면 참여 요청이 옵니다.</span>
+      <div style="margin-top:8px"><button class="btn sm" type="button" data-act="copyCode">초대 문구 복사</button></div></div>
+    ${pend.length && owner ? `<div class="banner"><span>참여 요청 <b class="hl">${pend.length}건</b>이 있습니다. 승인해야 기록을 볼 수 있습니다.</span></div>` : ''}
+    ${sec('01', '선생님 목록', `<div class="panel" style="padding-block:4px">${members.map(m => `<div class="mem-row"><div><strong>${esc(st.nameOf(m.user_id))}</strong> <span class="role">${m.status === 'pending' ? '승인 대기' : ROLE[m.role]}</span></div>
+      <div class="row">${owner && m.role !== 'owner' ? (m.status === 'pending'
+        ? `<button class="btn sm primary" type="button" data-act="approve" data-u="${m.user_id}">승인</button><button class="btn sm danger" type="button" data-act="kick" data-u="${m.user_id}">거절</button>`
+        : `<select id="role-${m.user_id}" data-chg="role" data-u="${m.user_id}" aria-label="권한"><option value="editor" ${m.role === 'editor' ? 'selected' : ''}>담당 교사</option><option value="stamper" ${m.role === 'stamper' ? 'selected' : ''}>협력 교사</option></select>
+           <button class="btn sm" type="button" data-act="transfer" data-u="${m.user_id}">주인 넘기기</button><button class="btn sm danger" type="button" data-act="kick" data-u="${m.user_id}">내보내기</button>`) : ''}</div></div>`).join('')}</div>
+      <p class="hint">담당 교사는 모든 기록을 고칠 수 있고, 협력 교사는 수업 추가와 도장·결석만 기록합니다.</p>`, `${members.length}명`)}
+    <div>${owner ? `<button class="btn danger" type="button" data-act="delClass">이 반 삭제 (모든 선생님)</button>` : `<button class="btn danger" type="button" data-act="leave">이 반에서 나가기</button>`}</div>
+  </div>`;
+}
+function viewAudit() {
+  const rows = ui.page.rows;
+  if (!rows) return `<div class="page">${subhead()}<h1 class="page-title">수정 기록</h1><div class="loading">불러오는 중…</div></div>`;
+  const sName = id => cd().students.find(s => s.id === id)?.name || '학생';
+  const sesL = id => { const s = cd().sessions.find(x => x.id === id); return s ? `${md(s.date)} 수업` : '수업'; };
+  const item = id => cd().scoring.items.find(i => i.id === id)?.name || '항목';
+  const say = a => { const d = a.detail || {}, [t, op] = a.action.split(':');
+    if (t === 'marks') return `${sesL(d.session_id)} · ${sName(d.student_id)} ${d.state === 'stamp' ? '도장' : d.state === 'absent' ? '결석' : '지움'}`;
+    if (t === 'item_scores') return `${item(d.item_id)} · ${sName(d.student_id)} ${d.value ?? '지움'}`;
+    if (t === 'csb') return `최성보 · ${sName(d.student_id)} 성취율 ${d.rate ?? '-'}${d.done ? ' · 이수 확인' : ''}`;
+    if (t === 'csb_logs') return `최성보 기록 ${op === 'delete' ? '삭제' : '추가'} · ${sName(d.student_id)} ${d.kind || ''}`;
+    if (t === 'students') return `학생 ${op === 'delete' ? '삭제' : op === 'insert' ? '추가' : '수정'} · ${d.no ?? ''} ${d.name || ''}`;
+    if (t === 'sessions') return `수업 ${op === 'delete' ? '삭제' : op === 'insert' ? '추가' : '수정'} · ${md(d.date)} ${d.topic || ''}`;
+    return a.action; };
+  const fmt = at => { const d = new Date(at); return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  return `<div class="page">${subhead()}<div class="head"><div><h1>수정 기록</h1><p>최근 150건</p></div></div>
+    ${rows.length ? `<div class="panel audit" style="padding-block:4px">${rows.map(a => `<div><time>${fmt(a.at)}</time><span><b>${esc(st.nameOf(a.user_id))}</b> · ${esc(say(a))}</span></div>`).join('')}</div>` : '<div class="empty"><p class="hint">아직 기록이 없습니다.</p></div>'}
+  </div>`;
+}
+function viewSemester() {
+  const c = cls();
+  return `<div class="page">${subhead()}<h1 class="page-title">학기 넘기기</h1>
+    ${sec('01', '같은 명단으로 새 반', `<p class="hint">학생 ${cd().students.length}명과 점수 설정을 그대로 가져와 새 학기 반을 만듭니다. 도장·점수 기록은 새 반에 옮겨지지 않습니다.</p>
+      <div><button class="btn primary" type="button" data-act="go" data-v="copyClass">새 학기 반 만들기</button></div>`)}
+    ${sec('02', c.archived ? '보관 해제' : '이 반 보관', `<p class="hint">${c.archived ? '보관을 해제하면 반 목록 위쪽에 다시 보입니다.' : '보관해도 기록은 그대로 남고, 반 목록의 ‘보관한 반’으로 옮겨집니다.'}</p>
+      <div><button class="btn" type="button" data-act="archive">${c.archived ? '보관 해제' : '이 반 보관'}</button></div>`)}
+  </div>`;
+}
+function viewUnits() {
+  const c = cls(), s = SUBJECTS[c.subject];
+  return `<div class="page">${subhead()}<div class="head"><div><h1>${esc(s.name)}</h1><p>${esc(s.kind)} · 2022 개정 교육과정</p></div></div>
+    ${s.units.map((u, i) => sec(String(i + 1).padStart(2, '0'), esc(u[0].replace(/^[ⅠⅡⅢ]\.\s*/, '')), `<div class="panel"><ol style="margin:0;padding-left:22px;display:grid;gap:6px">${u[1].map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>`)).join('')}
+  </div>`;
+}
+function classGroups() {
+  const act = S.classes.filter(k => k.status === 'active' && !k.archived), groups = [];
+  for (const g of [1, 2, 3, null]) { const arr = act.filter(k => (k.grade ?? (Number(String(k.name).match(/^(\d)학년/)?.[1]) || null)) === g); if (arr.length) groups.push([g ? `${g}학년` : '기타', arr]); }
+  const pend = S.classes.filter(k => k.status === 'pending'), arch = S.classes.filter(k => k.status === 'active' && k.archived);
+  if (pend.length) groups.push(['승인 대기', pend]); if (arch.length) groups.push(['보관한 반', arch]);
+  return groups;
+}
+function classRows(arr) {
+  return `<ul class="list">${arr.map(k => `<li><button class="s-card" style="grid-template-columns:minmax(0,1fr) auto" type="button" data-act="useClass" data-id="${k.id}">
+    <div class="s-info"><strong>${esc(k.name)}${k.id === S.cur ? '<span class="pill red">사용 중</span>' : ''}</strong><span>${esc(SUBJECTS[k.subject]?.name || '')} · ${esc(k.term || '')} · ${k.status === 'pending' ? '승인 대기' : esc(ROLE[k.role] || '')}</span></div>
+    <span class="chev" style="color:var(--muted);font-size:20px">›</span></button></li>`).join('')}</ul>`;
+}
+function viewClassList() {
+  const groups = classGroups();
+  return `<div class="page">${subhead()}<div class="head"><div><h1>반 목록</h1><p>${S.classes.length}개 반</p></div><button class="btn primary" type="button" data-act="go" data-v="newClass">+ 새 반</button></div>
+    ${groups.length ? groups.map(([t, arr], i) => sec(String(i + 1).padStart(2, '0'), t, classRows(arr), `${arr.length}개`)).join('') : viewEmpty()}
+  </div>`;
+}
+function viewTheme() {
+  const t = getTheme();
+  return `<div class="page">${subhead()}<h1 class="page-title">화면 모드</h1>
+    <div class="opts">${Object.entries(THEME_NAME).map(([k, v]) => `<button type="button" class="opt ${t === k ? 'on' : ''}" data-act="setTheme" data-v="${k}"><b>${v}</b><small>${k === 'dark' ? '검은 바탕에 주황 강조 (교실 화면·밤에 눈이 편함)' : k === 'light' ? '흰 바탕 (밝은 곳·인쇄물 느낌)' : '휴대폰의 다크 모드 설정을 따라갑니다'}</small></button>`).join('')}</div>
+  </div>`;
+}
+function viewInstall() {
+  return `<div class="page">${subhead()}<h1 class="page-title">휴대폰에 설치</h1>
+    ${installEvt ? `<button class="btn primary lg" type="button" data-act="install">지금 홈 화면에 설치</button>` : ''}
+    ${sec('01', '아이폰 (사파리)', `<ol class="steps"><li><span class="n">1</span><p>사파리에서 앱 주소를 엽니다.</p></li><li><span class="n">2</span><p>아래쪽 <b class="hl">공유 버튼</b>(네모에 위 화살표)을 누릅니다.</p></li><li><span class="n">3</span><p><b class="hl">홈 화면에 추가</b>를 누릅니다.</p></li></ol>`)}
+    ${sec('02', '안드로이드 (크롬)', `<ol class="steps"><li><span class="n">1</span><p>크롬에서 앱 주소를 엽니다.</p></li><li><span class="n">2</span><p>오른쪽 위 <b class="hl">⋮ 메뉴</b> → <b class="hl">앱 설치</b>(또는 홈 화면에 추가)를 누릅니다.</p></li></ol>`)}
+    <div class="row"><span class="num hint" style="word-break:break-all">${esc(location.origin + location.pathname)}</span><button class="btn sm" type="button" data-act="copyAppLink">주소 복사</button></div>
+  </div>`;
+}
+function viewJoin() {
+  return `<div class="page">${subhead()}<h1 class="page-title">반 코드로 참여</h1>
+    <p class="hint">동료 선생님께 받은 <b class="hl">6자리 반 코드</b>를 입력하세요. 반을 만든 선생님이 승인하면 기록을 함께 볼 수 있습니다.</p>
+    <input class="inp codein" id="joinCode" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="ABC123">
+    <button class="btn primary lg" type="button" data-act="joinByCode">참여 요청</button>
+  </div>`;
+}
+function viewTerms() { return `<div class="page">${subhead()}<h1 class="page-title">약관 · 개인정보</h1>${sec('01', '서비스 이용약관', `<div class="panel">${TERMS_HTML}</div>`)}${sec('02', '개인정보 수집·이용', `<div class="panel">${PRIVACY_HTML}</div>`)}</div>`; }
+
+const PAGES = { account: viewAccount, clsInfo: viewClassForm, newClass: viewClassForm, copyClass: viewClassForm, students: viewStudents, members: viewMembers, audit: viewAudit,
+  semester: viewSemester, units: viewUnits, classList: viewClassList, theme: viewTheme, install: viewInstall, join: viewJoin, terms: viewTerms, session: viewSessionForm };
+const NEEDS_CLASS = ['clsInfo', 'copyClass', 'students', 'members', 'audit', 'semester', 'units', 'session'];
+function go(name, extra = {}) {
+  const c = cls();
+  if (NEEDS_CLASS.includes(name) && !(c && c.status === 'active' && cd().loaded)) { toast('먼저 반을 선택해 주세요.'); return; }
+  const page = { name, back: ui.page?.name === 'semester' ? 'semester' : null, ...extra };
+  if (name === 'newClass') ui.form = { subject: null, grade: null, room: null, roomText: '', term: defaultTerm(), hours: 64 };
+  if (name === 'clsInfo') ui.form = formFromClass(c);
+  if (name === 'copyClass') { ui.form = { ...formFromClass(c), term: termChoices().find(t => t !== c.term) || defaultTerm() }; page.name = 'newClass'; page.copy = true; }
+  ui.page = page;
+  if (name === 'audit') st.fetchAudit().then(rows => { if (ui.page?.name === 'audit') { ui.page.rows = rows; render(true); } }).catch(e => toast(e.message));
+  render(true); scrollTo(0, 0);
+}
+function openSessionForm(s) {
+  const d = s?.date || today(), [y, m] = d.split('-').map(Number);
+  const [ui_, uj] = s?.unit ? s.unit.split('-').map(Number) : [null, null];
+  ui.sform = { id: s?.id || null, date: d, ym: [y, m], period: s?.period ?? null, unitI: ui_, unitJ: uj, topic: s?.topic && s.topic !== subUnit(cls().subject, s.unit) ? s.topic : '', pages: s?.pages || '', memo: s?.memo || '' };
+  ui.page = { name: 'session', back: s ? 'stamp' : null };
+  render(true); scrollTo(0, 0);
 }
 
 /* ───────── 설치 안내 ───────── */
@@ -622,33 +829,9 @@ function attendRows() {
 }
 
 /* ───────── 반 만들기 시트 ───────── */
-function classSheet(k, opts = {}) {
-  const isNew = !k; k = k || { name: '', subject: 'cm2', term: '2026학년도 2학기', hours: 64 };
-  openSheet(opts.title || (isNew ? '새 반 만들기' : '반 정보 수정'), `
-    <label class="field"><span>반 이름</span><input class="inp" id="cName" value="${esc(k.name)}" placeholder="예: 1학년 3반"></label>
-    <label class="field"><span>과목 (2022 개정 교육과정)</span><select class="inp" id="cSubj">${Object.entries(SUBJECTS).map(([id, s]) => `<option value="${id}" ${k.subject === id ? 'selected' : ''}>${s.name} · ${s.kind}</option>`).join('')}</select></label>
-    <div class="grid2"><label class="field"><span>학기</span><input class="inp" id="cTerm" value="${esc(k.term || '')}"></label>
-    <label class="field"><span>총 수업 시수</span><input class="inp num" type="number" inputmode="numeric" id="cHours" value="${k.hours || 64}"></label></div>
-    <p class="hint">4학점 과목은 64시간(학점당 16회)이 기본입니다. 최성보 결석 허용 시간 계산에 쓰입니다.</p>
-    <button class="btn primary" type="button" data-act="saveClass" data-mode="${opts.copy ? 'copy' : isNew ? 'new' : 'edit'}">${opts.copy ? '명단 복사해서 만들기' : '저장'}</button>`);
-}
-function sessionSheet(s) {
-  const c = cls(), isNew = !s;
-  s = s || { date: today(), period: '', unit: '', topic: '', pages: '', memo: '' };
-  const opts = SUBJECTS[c.subject].units.map((u, i) => `<optgroup label="${esc(u[0])}">${u[1].map((n, j) => `<option value="${i}-${j}" ${s.unit === `${i}-${j}` ? 'selected' : ''}>${esc(n)}</option>`).join('')}</optgroup>`).join('');
-  openSheet(isNew ? '수업 추가' : '수업 정보 수정', `
-    <div class="grid2"><label class="field"><span>수업 날짜</span><input class="inp" type="date" id="sDate" value="${s.date}"></label>
-    <label class="field"><span>교시</span><select class="inp" id="sPeriod"><option value="">-</option>${[1, 2, 3, 4, 5, 6, 7, 8].map(p => `<option ${String(s.period) === String(p) ? 'selected' : ''}>${p}</option>`).join('')}</select></label></div>
-    <label class="field"><span>단원 (${esc(SUBJECTS[c.subject].name)})</span><select class="inp" id="sUnit"><option value="">선택 안 함</option>${opts}</select></label>
-    <label class="field"><span>학습 주제</span><input class="inp" id="sTopic" value="${esc(s.topic)}" placeholder="비우면 단원 이름이 들어갑니다"></label>
-    <label class="field"><span>교재 페이지</span><input class="inp" id="sPages" value="${esc(s.pages)}" placeholder="예: 34-41"></label>
-    <label class="field"><span>메모</span><input class="inp" id="sMemo" value="${esc(s.memo || '')}" placeholder="예: 쪽지 시험, 활동지 배부"></label>
-    <div class="row end">${!isNew && st.canEdit() ? `<button class="btn danger" type="button" data-act="delSession" data-id="${s.id}">수업 삭제</button>` : ''}<button class="btn primary" type="button" data-act="saveSession" data-id="${s.id || ''}">${isNew ? '추가하고 도장 찍기' : '저장'}</button></div>`);
-}
-
 /* ───────── 동작 ───────── */
 const curSession = () => cd().sessions.find(x => x.id === ui.session);
-function setTab(t) { ui.tab = t; ui.session = null; ui.student = null; try { localStorage.setItem('ms:tab', t); } catch (e) {} st.setPresence({ tab: t, session: null }); }
+function setTab(t) { ui.tab = t; ui.page = null; ui.session = null; ui.student = null; try { localStorage.setItem('ms:tab', t); } catch (e) {} st.setPresence({ tab: t, session: null }); }
 const ACT = {
   login(el) { st.signIn(el.dataset.v).then(r => { if (r?.error) toast('로그인을 시작하지 못했습니다: ' + r.error.message); }); },
   loginOther() { st.signIn('kakao', { otherAccount: true }).then(r => { if (r?.error) toast('로그인을 시작하지 못했습니다: ' + r.error.message); }); },
@@ -686,7 +869,7 @@ const ACT = {
       <div class="s-info"><strong>${esc(k.name)}</strong><span>${esc(SUBJECTS[k.subject]?.name || '')} · ${k.status === 'pending' ? '승인 대기' : esc(ROLE[k.role])}</span></div>${k.id === S.cur ? '<span class="pill red">사용 중</span>' : ''}</button></li>`).join('')}</ul>` : '<p class="hint">참여 중인 반이 없습니다.</p>'}
       <div class="grid2"><button class="btn primary" type="button" data-act="newClass">+ 새 반</button><button class="btn outline" type="button" data-act="joinSheet">코드로 참여</button></div>`);
   },
-  useClass(el) { ui.session = null; ui.student = null; ui.item = null; st.openClass(el.dataset.id); closeSheet(); render(true); },
+  useClass(el) { ui.session = null; ui.student = null; ui.item = null; ui.page = null; st.openClass(el.dataset.id); closeSheet(); render(true); toast('반을 바꿨습니다.'); },
   newClass() { classSheet(); },
   editClass() { classSheet(cls()); },
   copyClass() { const c = cls(); classSheet({ ...c, name: c.name, term: '' }, { title: '같은 명단으로 새 반', copy: true }); },
@@ -705,8 +888,8 @@ const ACT = {
     }).finally(() => { el.disabled = false; });
   },
   archive() { const c = cls(); st.updateClass({ archived: !c.archived }); toast(c.archived ? '보관을 해제했습니다.' : '반을 보관했습니다. 기록은 그대로 남아 있습니다.'); },
-  delClass(el) { if (!armed(el)) return; guard(async () => { await st.deleteClass(S.cur); toast('반을 삭제했습니다.'); }); },
-  leave(el) { if (!armed(el)) return; guard(async () => { await st.removeMember(S.user.id); toast('반에서 나왔습니다.'); }); },
+  delClass(el) { if (!armed(el)) return; guard(async () => { await st.deleteClass(S.cur); ui.page = null; render(true); toast('반을 삭제했습니다.'); }); },
+  leave(el) { if (!armed(el)) return; guard(async () => { await st.removeMember(S.user.id); ui.page = null; render(true); toast('반에서 나왔습니다.'); }); },
   approve(el) { guard(async () => { await st.setMember(el.dataset.u, { status: 'active' }); toast('승인했습니다. 처음에는 협력 교사로 참여합니다.'); }); },
   kick(el) { if (!armed(el)) return; guard(async () => { await st.removeMember(el.dataset.u); toast('처리했습니다.'); }); },
   joinSheet() {
@@ -722,7 +905,7 @@ const ACT = {
     guard(async () => {
       const r = await st.requestJoin(code);
       if (!r.ok) { toast('그 코드의 반이 없습니다. 코드를 다시 확인해 주세요.'); return; }
-      st.openClass(r.id); closeSheet(); render(true);
+      st.openClass(r.id); closeSheet(); ui.page = null; ui.tab = 'lesson'; render(true);
       toast(r.status === 'active' ? `${r.name} 반을 열었습니다.` : `${r.name} 반에 참여를 요청했습니다. 승인을 기다려 주세요.`);
     }).finally(() => { el.disabled = false; });
   },
@@ -783,7 +966,7 @@ const ACT = {
     else { const id = st.createSession(data); ui.session = id; ui.mode = 'stamp'; ui.tab = 'lesson'; st.setPresence({ tab: 'lesson', session: id }); }
     closeSheet(); render(true); scrollTo(0, 0);
   },
-  delSession(el) { if (!armed(el)) return; st.deleteSession(el.dataset.id); ui.session = null; st.setPresence({ session: null }); closeSheet(); toast('수업을 삭제했습니다.'); },
+  delSession(el) { if (!armed(el)) return; st.deleteSession(el.dataset.id); ui.session = null; ui.page = null; st.setPresence({ session: null }); closeSheet(); toast('수업을 삭제했습니다.'); },
   openSession(el) { ui.session = el.dataset.id; ui.mode = 'stamp'; st.setPresence({ session: ui.session }); render(true); scrollTo(0, 0); },
   back() { ui.session = null; st.setPresence({ session: null }); render(true); },
   mode(el) { ui.mode = el.dataset.v; render(true); },
@@ -884,6 +1067,78 @@ const CHG = {
   },
   role(el) { guard(async () => { await st.setMember(el.dataset.u, { role: el.value }); toast('권한을 바꿨습니다.'); }); }
 };
+
+/* ───────── 새 화면 동작 ───────── */
+Object.assign(ACT, {
+  go(el) { go(el.dataset.v); },
+  back2() {
+    const b = ui.page?.back;
+    if (b === 'stamp') { ui.page = null; render(true); }
+    else if (b) go(b);
+    else { ui.page = null; render(true); }
+    scrollTo(0, 0);
+  },
+  newClass() { closeSheet(); go('newClass'); },
+  editClass() { go('clsInfo'); },
+  copyClass() { go('copyClass'); },
+  joinSheet() { closeSheet(); go('join'); },
+  account() { closeSheet(); ui.tab = 'classes'; go('account'); },
+  newSession() { openSessionForm(null); },
+  editSession(el) { openSessionForm(cd().sessions.find(s => s.id === el.dataset.id)); },
+  setTheme(el) { setTheme(el.dataset.v); render(true); },
+  copyAppLink() { copyText(location.origin + location.pathname, '주소 복사', '앱 주소를 복사했습니다.'); },
+  fset(el) {
+    const k = el.dataset.k; let v = el.dataset.v;
+    if (k === 'grade' || k === 'hours') v = Number(v);
+    ui.form[k] = v; render(true);
+    if (k === 'room' && v === 'custom') setTimeout(() => $('#fRoomText')?.focus(), 30);
+  },
+  sset(el) {
+    const k = el.dataset.k, raw = el.dataset.v, f = ui.sform;
+    if (k === 'period') f.period = raw === '' ? null : Number(raw);
+    if (k === 'unitI') { const i = Number(raw); if (f.unitI === i) { f.unitI = null; } else { f.unitI = i; } f.unitJ = null; }
+    if (k === 'unitJ') { const j = Number(raw); f.unitJ = f.unitJ === j ? null : j; }
+    render(true);
+  },
+  calPick(el) { ui.sform.date = el.dataset.v; render(true); },
+  calMove(el) { let [y, m] = ui.sform.ym; m += Number(el.dataset.v); if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } ui.sform.ym = [y, m]; render(true); },
+  saveClassForm(el) {
+    const f = ui.form, name = formName(f), pg_ = ui.page;
+    if (!f.subject || !name) { toast('과목과 학년·반을 골라 주세요.'); return; }
+    const meta = { name, subject: f.subject, term: f.term, hours: Number(f.hours) || 64 };
+    const extra = { grade: f.grade, room: f.room === 'custom' ? f.roomText.trim() : f.room };
+    if (pg_.name === 'clsInfo') { st.updateClass({ ...meta, ...extra }); ui.page = null; render(true); toast('반 정보를 저장했습니다.'); return; }
+    el.disabled = true;
+    const roster = pg_.copy ? students().map(s => ({ no: s.no, name: s.name })) : [];
+    const scoring = pg_.copy ? clone(cd().scoring) : defaultScoring();
+    guard(async () => {
+      const code = await st.createClass(meta, scoring);
+      st.updateClass(extra);
+      if (roster.length) st.addStudents(roster);
+      ui.page = null; ui.tab = roster.length ? 'lesson' : 'classes';
+      if (!roster.length) go('students'); else render(true);
+      toast(`${name} 반을 만들었습니다. 반 코드는 ${code}입니다.`);
+    }).finally(() => { if (el.isConnected) el.disabled = false; });
+  },
+  saveSessionForm() {
+    const f = ui.sform, c = cls();
+    const unit = f.unitI != null && f.unitJ != null ? `${f.unitI}-${f.unitJ}` : (f.unitI != null ? `${f.unitI}-` : '');
+    const data = { date: f.date, period: f.period || null, unit: unit.endsWith('-') ? '' : unit, topic: f.topic.trim() || (f.unitI != null && f.unitJ != null ? subUnit(c.subject, unit) : (f.unitI != null ? SUBJECTS[c.subject].units[f.unitI][0] : '')), pages: f.pages.trim(), memo: f.memo.trim() };
+    if (f.id) { st.updateSession(f.id, data); ui.page = null; ui.session = f.id; render(true); toast('저장했습니다.'); return; }
+    const id = st.createSession(data); ui.page = null; ui.session = id; ui.mode = 'stamp'; ui.tab = 'lesson';
+    st.setPresence({ tab: 'lesson', session: id }); render(true); scrollTo(0, 0);
+  },
+  pickClass() {
+    const groups = classGroups();
+    openSheet('반 선택', `${groups.length ? groups.map(([t, arr]) => `<div class="menu-label" style="margin:4px 0 -4px">${t}</div>${classRows(arr)}`).join('') : '<p class="hint">참여 중인 반이 없습니다.</p>'}
+      <div class="grid2"><button class="btn primary" type="button" data-act="newClass">+ 새 반</button><button class="btn outline" type="button" data-act="joinSheet">코드로 참여</button></div>`);
+  }
+});
+const INP = {
+  roomText(el) { ui.form.roomText = el.value; const n = formName(ui.form); const t = $('#sumName'); if (t) t.textContent = n || '학년·반을 골라 주세요'; const b = $('#fSave'); if (b) b.disabled = !(ui.form.subject && n); },
+  topic(el) { ui.sform.topic = el.value; }, pages(el) { ui.sform.pages = el.value; }, memo(el) { ui.sform.memo = el.value; }
+};
+document.addEventListener('input', e => { const el = e.target.closest('[data-inp]'); if (el && INP[el.dataset.inp]) INP[el.dataset.inp](el); });
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el || el.disabled) return; const f = ACT[el.dataset.act]; if (f) { e.preventDefault(); f(el, e); } });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); if (e.key === 'Enter' && e.target.id === 'joinCode') ACT.joinByCode($('[data-act=joinByCode]')); });

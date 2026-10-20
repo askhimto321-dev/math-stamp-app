@@ -26,6 +26,8 @@ create table if not exists public.classes (
   archived boolean not null default false,
   created_at timestamptz not null default now()
 );
+alter table public.classes add column if not exists grade int check (grade between 1 and 3);
+alter table public.classes add column if not exists room text not null default '';
 
 -- 반 구성원: owner(만든 사람) · editor(담당 교사, 모두 수정) · stamper(협력 교사, 수업·도장만)
 create table if not exists public.class_members (
@@ -273,13 +275,14 @@ begin
 end $$;
 
 -- 대기 중인 반 이름 보기 (승인 전에도 내 요청 목록에 이름이 보이도록)
-create or replace function public.my_classes()
-returns table (id text, name text, subject text, term text, archived boolean, role text, status text)
+drop function if exists public.my_classes();
+create function public.my_classes()
+returns table (id text, name text, subject text, term text, archived boolean, role text, status text, grade int, room text)
 language sql stable security definer set search_path = public as $$
-  select c.id, c.name, c.subject, c.term, c.archived, m.role, m.status
+  select c.id, c.name, c.subject, c.term, c.archived, m.role, m.status, c.grade, c.room
   from public.class_members m join public.classes c on c.id = m.class_id
   where m.user_id = auth.uid()
-  order by c.archived, c.created_at desc
+  order by c.archived, c.grade nulls last, c.name, c.created_at desc
 $$;
 
 -- ───────────────────────── 접근 규칙 (RLS) ─────────────────────────
