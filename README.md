@@ -29,6 +29,19 @@
 > **이미 1단계를 마친 프로젝트라면**: 회원가입·탈퇴 기능이 추가되었습니다. SQL Editor 에서 `supabase/002_signup.sql` 도 한 번 실행하세요.
 > (새로 만드는 프로젝트는 `schema.sql` 에 이미 들어 있어 따로 실행할 필요가 없습니다.)
 
+### (선택) DB 자동 업데이트 설정 — 한 번만
+
+설정해 두면 `supabase/schema.sql` 이 바뀔 때마다 GitHub 가 Supabase 에 자동으로 적용합니다. SQL 을 직접 붙여 넣을 필요가 없어집니다.
+
+1. Supabase 프로젝트 화면 위쪽 **Connect** → **Connection String** 탭 → **Session pooler** 의 주소를 복사합니다.
+   (`postgresql://postgres.프로젝트ID:[YOUR-PASSWORD]@aws-…pooler.supabase.com:5432/postgres`)
+2. `[YOUR-PASSWORD]` 부분을 프로젝트 만들 때 정한 **DB 비밀번호**로 바꿉니다. 대괄호도 지웁니다.
+   비밀번호를 잊었다면 **Project Settings → Database → Reset database password** 로 새로 만드세요.
+3. GitHub 저장소 **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `SUPABASE_DB_URL`
+   - Secret: 2번에서 만든 주소 → **Add secret**
+4. **Actions → Update Supabase database → Run workflow** 로 한 번 실행해 초록색 체크를 확인합니다.
+
 ### 2단계. 앱에 서버 주소 넣기
 
 1. Supabase 왼쪽 아래 **Project Settings → API** (또는 **Data API**) 로 갑니다.

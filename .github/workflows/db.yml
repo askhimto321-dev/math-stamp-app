@@ -1,0 +1,37 @@
+# supabase/schema.sql 이 바뀌면 Supabase 데이터베이스에 자동으로 적용합니다.
+# 저장소 Settings → Secrets and variables → Actions 에 SUPABASE_DB_URL 이 있어야 동작합니다.
+# schema.sql 은 여러 번 실행해도 기존 데이터가 지워지지 않도록 작성되어 있습니다.
+name: Update Supabase database
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/schema.sql']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: supabase-db
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+      - name: Apply schema.sql
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL 비밀값이 없습니다. README의 'DB 자동 업데이트 설정'을 참고하세요."
+            exit 1
+          fi
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -q -c "set client_min_messages = warning" -f supabase/schema.sql
+          echo "적용 완료"
+      - name: Check
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          psql "$DB_URL" -At -c "select 'tables: ' || count(*) from information_schema.tables where table_schema='public'" \
+                          -c "select 'signup ready: ' || exists(select 1 from information_schema.columns where table_schema='public' and table_name='profiles' and column_name='signup_completed_at')"
